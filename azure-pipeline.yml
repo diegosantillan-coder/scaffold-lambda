@@ -31,5 +31,5 @@ stages:
             - npm
         steps:
           - template: pipelines/build.yml
-          - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/trunk') }}:
+          - ${{ values.name }}:
               - template: pipelines/deploy.yml
