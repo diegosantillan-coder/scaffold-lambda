@@ -1,0 +1,51 @@
+steps:
+  - task: SonarQubePrepare@4
+    displayName: "Prepare analysis on SonarQube"
+    inputs:
+      SonarQube: SonarQube
+      scannerMode: CLI
+      configMode: manual
+      cliProjectKey: "$(Build.Repository.Name)_$(componentName)"
+      cliProjectName: "$(Build.Repository.Name)_$(componentName)"
+      cliProjectVersion: "$(Build.BuildNumber)"
+      cliSources: "$(System.DefaultWorkingDirectory)/$(componentName)"
+      extraProperties: |
+        sonar.projectBaseDir=$(System.DefaultWorkingDirectory)/$(componentName)
+        sonar.exclusions=**/coverage/**,**/test/**,test-reports/**
+        sonar.sources=src
+        sonar.python.coverage.reportPaths=$(System.DefaultWorkingDirectory)/$(componentName)/coverage.xml
+        sonar.python.xunit.reportPath=nosetests.xml
+        sonar.language=py
+
+  - script: apt-get update
+    displayName: "Update"
+
+  - script: apt-get install poppler-utils
+    displayName: "Install poppler-utils"
+
+  - script: apt-get install make
+    displayName: "Install make runner"
+
+  - script: pip3 install pipenv
+    displayName: "Install pipenv"
+
+  - script: |
+      apt-get install python3.9
+      python3.9 --version
+    displayName: "Python Version"
+
+  - script: |
+      cd $(componentName)
+      export PIP_NO_CACHE_DIR=false
+      export LC_ALL=C.UTF-8
+      make init
+      make test
+    displayName: "Build"
+
+  - task: SonarQubeAnalyze@4
+    displayName: "Run Code Analysis"
+
+  - task: Sonar-buildbreaker@8
+    displayName: "Break build on quality gate failure"
+    inputs:
+      SonarQube: SonarQube
