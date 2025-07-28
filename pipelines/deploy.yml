@@ -1,43 +1,45 @@
 steps:
   - task: CopyFiles@2
-    displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)/build'
+    displayName: 'Copy application files'
     inputs:
       SourceFolder: '$(System.DefaultWorkingDirectory)'
-      Contents: 'build/**'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      Contents: |
+        src/**
+        package.json
+        package-lock.json
+        index.js
+      TargetFolder: '$(Build.ArtifactStagingDirectory)/app'
+      CleanTargetFolder: true
 
-  - task: CopyFiles@2
-    displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)/node_modules'
+  - task: Npm@1
+    displayName: 'Install production dependencies'
     inputs:
-      SourceFolder: '$(System.DefaultWorkingDirectory)'
-      Contents: 'node_modules/**'
-      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+      command: 'ci'
+      workingDir: '$(Build.ArtifactStagingDirectory)/app'
+      customRegistry: 'useNpmrc'
 
   - task: ArchiveFiles@2
+    displayName: 'Create deployment package'
     inputs:
-      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)'
+      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)/app'
       includeRootFolder: false
       archiveType: 'zip'
       archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildNumber).zip'
       replaceExistingArchive: true
 
   - task: PublishBuildArtifacts@1
-    displayName: 'Publish Artifact'
+    displayName: 'Publish Build Artifact'
     inputs:
-      PathtoPublish: $(Build.ArtifactStagingDirectory)/$(Build.BuildNumber).zip
-      ArtifactName: Artifact
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildNumber).zip'
+      ArtifactName: 'lambda-package'
+      publishLocation: 'Container'
 
-  - task: ArtifactoryGenericUpload@2
-    displayName: 'Publish Artifact to Artifactory'
+  - task: UniversalPackages@0
+    displayName: 'Publish to Azure Artifacts'
     inputs:
-      artifactoryService: Artifactory
-      fileSpec: |
-        {
-          "files": [
-            {
-              "pattern": "$(Build.ArtifactStagingDirectory)/*.zip",
-              "target": "build-$(Artifactory.Repository)/lambdas/$(Build.BuildNumber)/"
-            }
-          ]
-        }
-      collectBuildInfo: true
+      command: 'publish'
+      publishDirectory: '$(Build.ArtifactStagingDirectory)'
+      feedsToUsePublish: 'internal'
+      vstsFeedPublish: 'your-feed-name'
+      vstsFeedPackagePublish: '$(ARTIFACTORY_REPOSITORY)'
+      versionOption: 'patch'

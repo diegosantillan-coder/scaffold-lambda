@@ -1,8 +1,7 @@
 name: $(Build.SourceBranchName).$(date:yyyyMMdd)$(rev:.r)
 
 variables:
-  - name: Artifactory.Repository
-    value: 'NU4260001_ProcessDataEtlResults_Lambda'
+  ARTIFACTORY_REPOSITORY: 'NU4260001_ProcessDataEtlResults_Lambda'
 
 trigger:
   branches:
@@ -11,26 +10,24 @@ trigger:
       - feature/*
   paths:
     include:
-      - /*
+      - '*'
 
 resources:
-  - repo: self
-    clean: all
-    fetchDepth: 1
+  repositories:
+    - repository: self
+      clean: all
+      fetchDepth: 1
 
 stages:
   - stage: Build
-    displayName: Build and Publish
+    displayName: 'Build and Publish'
     jobs:
-      - job: Linux
-        displayName: Build and publication of artifact
+      - job: BuildJob
+        displayName: 'Build and publication of artifact'
         pool:
-          name: Build
-          demands:
-            - Agent.OS -equals Linux
-            - npm
-
+          vmImage: 'ubuntu-latest'
+        
         steps:
           - template: pipelines/build.yml
-          - '${{ if eq(variables[''Build.SourceBranch''], ''refs/heads/trunk'') }}':
-              - template: pipelines/deploy.yml
+          - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/trunk') }}:
+            - template: pipelines/deploy.yml
