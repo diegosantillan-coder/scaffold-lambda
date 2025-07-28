@@ -29,7 +29,6 @@ stages:
           demands:
             - Agent.OS -equals Linux
             - npm
-
         steps:
           - template: pipelines/build.yml
           - ${{ if  eq(variables['Build.SourceBranch'], 'refs/heads/trunk') }}:
