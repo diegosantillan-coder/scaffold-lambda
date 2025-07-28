@@ -1,0 +1,43 @@
+steps:
+  - task: CopyFiles@2
+    displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)/build'
+    inputs:
+      SourceFolder: '$(System.DefaultWorkingDirectory)'
+      Contents: 'build/**'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+  - task: CopyFiles@2
+    displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)/node_modules'
+    inputs:
+      SourceFolder: '$(System.DefaultWorkingDirectory)'
+      Contents: 'node_modules/**'
+      TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+  - task: ArchiveFiles@2
+    inputs:
+      rootFolderOrFile: '$(Build.ArtifactStagingDirectory)'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildNumber).zip'
+      replaceExistingArchive: true
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact'
+    inputs:
+      PathtoPublish: $(Build.ArtifactStagingDirectory)/$(Build.BuildNumber).zip
+      ArtifactName: Artifact
+
+  - task: ArtifactoryGenericUpload@2
+    displayName: 'Publish Artifact to Artifactory'
+    inputs:
+      artifactoryService: Artifactory
+      fileSpec: |
+        {
+          "files": [
+            {
+              "pattern": "$(Build.ArtifactStagingDirectory)/*.zip",
+              "target": "build-$(Artifactory.Repository)/lambdas/$(Build.BuildNumber)/"
+            }
+          ]
+        }
+      collectBuildInfo: true

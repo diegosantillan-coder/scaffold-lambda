@@ -1,0 +1,58 @@
+steps:
+  - task: UseNode@1
+    inputs:
+      version: '18.x'
+
+  - task: Npm@1
+    displayName: 'Install Dependencies (including devDependencies)'
+    inputs:
+      workingDir: '$(System.DefaultWorkingDirectory)'
+      verbose: false
+  
+  - task: SonarSource.sonarqube.15B84CA1-B62F-4A2A-A403-89B77A063157.SonarQubePrepare@4
+    displayName: 'Prepare analysis on SonarQube'
+    inputs:
+      SonarQube: 'SonarQube'
+      scannerMode: CLI
+      configMode: manual
+      cliProjectKey: '$(Build.Repository.Name)'
+      cliProjectName: '$(Build.Repository.Name)'
+      cliProjectVersion: '$(Build.BuildNumber)'
+      cliSources: '$(System.DefaultWorkingDirectory)'
+      extraProperties: |
+        sonar.projectBaseDir=$(System.DefaultWorkingDirectory)
+        sonar.exclusions=node_modules/**,coverage/**,examples/**,docs/**,reports/**
+        sonar.sources=$(System.DefaultWorkingDirectory)/src
+        sonar.sourceEncoding=UTF-8   
+        sonar.typescript.lcov.reportPaths=$(System.DefaultWorkingDirectory)/coverage/lcov.info
+        sonar.testExecutionReportPaths=$(System.DefaultWorkingDirectory)/coverage/sonar-report.xml
+        sonar.coverage.exclusions=test/**,*.test.ts,**/*.test.ts
+        sonar.language=js
+
+  - task: Npm@1
+    displayName: 'Test and Coverage'
+    inputs:
+      command: custom
+      workingDir: '$(System.DefaultWorkingDirectory)'
+      verbose: false
+      customCommand: run test
+
+  - task: PublishCodeCoverageResults@2
+    inputs:
+      codeCoverageTool: Cobertura
+      summaryFileLocation: $(System.DefaultWorkingDirectory)/coverage/cobertura-coverage.xml
+
+  - task: SonarSource.sonarqube.6D01813A-9589-4B15-8491-8164AEB38055.SonarQubeAnalyze@4
+    displayName: 'Run Code Analysis'
+
+  - task: sonar-buildbreaker@8
+    inputs:
+      SonarQube: 'SonarQube'
+
+  - task: Npm@1
+    displayName: 'Build'
+    inputs:
+      command: custom
+      workingDir: '$(System.DefaultWorkingDirectory)'
+      verbose: false
+      customCommand: run build

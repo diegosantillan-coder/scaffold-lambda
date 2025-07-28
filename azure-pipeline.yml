@@ -1,0 +1,36 @@
+name: $(Build.SourceBranchName).$(date:yyyyMMdd)$(rev:.r)
+
+variables:
+  - name: Artifactory.Repository
+    value: 'NU4260001_ProcessDataEtlResults_Lambda'
+
+trigger:
+  branches:
+    include:
+      - trunk
+      - feature/*
+  paths:
+    include:
+      - /*
+
+resources:
+  - repo: self
+    clean: all
+    fetchDepth: 1
+
+stages:
+  - stage: Build
+    displayName: Build and Publish
+    jobs:
+      - job: Linux
+        displayName: Build and publication of artifact
+        pool:
+          name: Build
+          demands:
+            - Agent.OS -equals Linux
+            - npm
+
+        steps:
+          - template: pipelines/build.yml
+          - ${{ if  eq(variables['Build.SourceBranch'], 'refs/heads/trunk') }}:
+              - template: pipelines/deploy.yml

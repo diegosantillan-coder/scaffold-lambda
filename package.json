@@ -1,0 +1,33 @@
+{
+  "name": "nu4260001_processdataetlresults_lambda",
+  "version": "1.0.0",
+  "description": "Lambda para ejecutar resultados etl",
+  "main": "Calculator.js",
+  "directories": {
+    "test": "__test__"
+  },
+  "scripts": {
+    "build": "npm prune --production",
+    "test": "npx jest --config jest.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://grupobancolombia.visualstudio.com/Vicepresidencia%20Servicios%20de%20Tecnolog%C3%ADa/_git/NU4260001_ProcessDataEtlResults_Lambda"
+  },
+  "author": "Negocios Digitales",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "express": "^5.1.0",
+    "jest": "^29.7.0",
+    "jest-html": "^1.5.0",
+    "jest-junit": "^16.0.0",
+    "jest-reporters": "^0.0.2",
+    "jest-sonar": "^0.2.16",
+    "typescript": "^5.8.3"
+  },
+  "jest": {
+    "coverageDirectory": "./coverage/",
+    "collectCoverage": true
+  }
+}
